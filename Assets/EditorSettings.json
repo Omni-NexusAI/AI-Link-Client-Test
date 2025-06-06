@@ -1,0 +1,24 @@
+{
+    "settings": [
+        {
+            "key": "CompanyName",
+            "value": "DefaultCompany"
+        },
+        {
+            "key": "ProductName",
+            "value": "AI_Link_Unity"
+        },
+        {
+            "key": "VirtualRealitySupported",
+            "value": "True"
+        },
+        {
+            "key": "AILink.Camera.PassthroughEnabled",
+            "value": "true"
+        },
+        {
+            "key": "AILink.Server.URL",
+            "value": "ws://localhost:8080"
+        }
+    ]
+}

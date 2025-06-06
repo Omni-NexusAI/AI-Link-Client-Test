@@ -1,0 +1,100 @@
+name: Build AI-Link Unity Client
+
+on:
+  push:
+    branches: [ main ] # Or your primary development branch
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  build:
+    name: Build for ${{ matrix.targetPlatform }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        targetPlatform:
+          - StandaloneWindows64 # Build for Windows
+          # - Android # Build for Android (Quest APK) # Temporarily disable Android until activation/build issues resolved
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Library folder
+        uses: actions/cache@v4
+        with:
+          path: Library # Cache the Library folder relative to the project root
+          key: Library-${{ matrix.targetPlatform }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-${{ matrix.targetPlatform }}-
+
+      # Rationale: Use GameCI Unity Builder action for robust Unity builds in CI.
+      - name: Build project
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          # Rationale: Specify the Unity version used for the project (adjust if needed).
+          unityVersion: 6.0.0f1 # Example: Use the specific Unity 6 version
+          targetPlatform: ${{ matrix.targetPlatform }}
+          # Rationale: Define build output path and name.
+          buildName: AI-Link-${{ matrix.targetPlatform }}
+          # Optional: Specify custom build options if needed
+          # customParameters: -myCustomBuildOption
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Build-${{ matrix.targetPlatform }}
+          # Rationale: Upload the built artifact from the path defined by unity-builder.
+          path: build/${{ matrix.targetPlatform }}
+
+  # Separate job for Android build due to potential specific requirements/longer build times
+  build-android:
+      name: Build for Android (Quest APK)
+      runs-on: ubuntu-latest
+      # Only run if secrets are likely available (e.g., on push to main, not PRs from forks)
+      if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+          with:
+            lfs: true
+
+        - name: Cache Library folder (Android)
+          uses: actions/cache@v4
+          with:
+            path: Library # Cache the Library folder relative to the project root
+            key: Library-Android-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+            restore-keys: |
+              Library-Android-
+
+        - name: Build project (Android)
+          uses: game-ci/unity-builder@v4
+          env:
+            UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+            UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+            UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          with:
+            unityVersion: 6.0.0f1 # Example: Use the specific Unity 6 version
+            targetPlatform: Android
+            buildName: AI-Link-Android
+            # Rationale: Ensure Android build settings are correct for Quest.
+            # These might be implicitly handled by Project Settings, but can be overridden.
+            androidAppBundle: false # Build APK, not AAB
+            # androidKeystoreName: user.keystore # Optional: If using custom keystore
+            # androidKeystoreBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+            # androidKeystorePass: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+            # androidKeyaliasName: ${{ secrets.ANDROID_KEYALIAS_NAME }}
+            # androidKeyaliasPass: ${{ secrets.ANDROID_KEYALIAS_PASS }}
+
+        - name: Upload Build Artifact (Android)
+          uses: actions/upload-artifact@v4
+          with:
+            name: Build-Android
+            path: build/Android

@@ -1,0 +1,28 @@
+{
+  "serverUrl": "ws://localhost:8080",
+  "authToken": "",
+  "reconnectDelaySeconds": 1.0,
+  "maxReconnectAttempts": 5,
+  "audio": {
+    "sampleRate": 44100,
+    "recordingEnabled": true,
+    "playbackEnabled": true,
+    "codec": "Opus",
+    "opusBitrate": 128000
+  },
+  "video": {
+    "captureFps": 30,
+    "captureWidth": 1280,
+    "captureHeight": 720,
+    "captureEnabled": true,
+    "displayEnabled": true,
+    "codec": "H264",
+    "jpegQuality": 80,
+    "h264Bitrate": 25000000
+  },
+  "latency": {
+    "logToFile": true,
+    "logFileName": "LatencyMonitor.log",
+    "historySize": 30
+  }
+}
